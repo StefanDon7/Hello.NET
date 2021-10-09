@@ -27,7 +27,6 @@ namespace Hello.NET.Domain.Models{
 
         public Agent Agent { get; set; }
 
-        public bool Otkazan { get; set; }
 
 
 

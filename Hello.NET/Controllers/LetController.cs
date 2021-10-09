@@ -25,7 +25,7 @@ namespace Hello.NET.Controllers
         [Route("get/all")]
         public JsonResult GetAll()
         {
-            string query = @"SELECT  m1.naziv as mestoPolaska,m2.naziv as MestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,l.otkazan
+            string query = @"SELECT l.letid, m1.naziv as mestoPolaska,m2.naziv as MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,l.otkazan
                             FROM let l JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)";
 
             DataTable dataTable = new DataTable();
@@ -47,9 +47,9 @@ namespace Hello.NET.Controllers
         [HttpGet]
         [Route("get/all/by/{mesto1?}/{mesto2?}/{datum?}")]
         public JsonResult GetAllByPlace1Place2Date(string? mesto1,string? mesto2,string? datum) {
-            string query = @"SELECT m1.naziv as mestoPolaska,m2.naziv as MestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta
-                             FROM let l JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
-                             WHERE m1.naziv='"+mesto1+"' AND m2.naziv='"+mesto2+"' AND l.datumPolaska LIKE '"+datum+"%' AND otkazan=0";
+            string query = @"SELECT  l.letid,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,SUM(CASE WHEN r.rezervacijaID!='NULL' THEN 1 ELSE 0 END)  as brojRezervacija
+                            FROM rezervacija r RIGHT JOIN let l ON(r.letid=l.letid) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
+                             WHERE m1.naziv='" + mesto1+"' AND m2.naziv='"+mesto2+"' AND l.datumPolaska LIKE '"+datum+ "%' AND otkazan=0 GROUP BY letid";
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
             MySqlDataReader myReader;
@@ -67,9 +67,9 @@ namespace Hello.NET.Controllers
         [HttpGet]
         [Route("get/all/by/{mesto1?}/{mesto2?}/{datum?}/notransfer")]
         public JsonResult GetAllByPlace1Place2DateNoTransfer(string? mesto1, string? mesto2, string? datum) {
-            string query = @"SELECT  m1.naziv as mestoPolaska,m2.naziv as MestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta
-                             FROM let l JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
-                             WHERE m1.naziv='" + mesto1 + "' AND m2.naziv='" + mesto2 + "' AND l.datumPolaska LIKE '" + datum + "%' AND otkazan=0 AND brojpresedanja=0";
+            string query = @"SELECT  l.letid,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,SUM(CASE WHEN r.rezervacijaID!='NULL' THEN 1 ELSE 0 END) as brojRezervacija
+                            FROM rezervacija r RIGHT JOIN let l ON(r.letid=l.letid) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
+                             WHERE l.brojPresedanja=0 AND m1.naziv='" + mesto1 + "' AND m2.naziv='" + mesto2 + "' AND l.datumPolaska LIKE '" + datum + "%' AND otkazan=0 GROUP BY letid";
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
             MySqlDataReader myReader;

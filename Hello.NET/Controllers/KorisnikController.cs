@@ -36,7 +36,7 @@ namespace Hello.NET.Controllers {
                     myCon.Close();
                 }
             }
-            return new JsonResult("Added Successfully");
+            return new JsonResult(dataTable);
         }
 
 
