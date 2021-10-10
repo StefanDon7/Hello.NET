@@ -26,8 +26,9 @@ namespace Hello.NET.Controllers {
         [Route("get/all/by/userID")]
         public JsonResult GetAllByUser(Korisnik korisnik) {
 
-            string query = @"SELECT  r.rezervacijaID,l.letID,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,l.otkazan
-                            FROM rezervacija r JOIN let l ON(r.letID=l.letID) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
+            string query = @"SELECT  r.rezervacijaID,l.letID,m1.naziv AS mestoPolaska,m2.naziv AS mestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,
+(CASE WHEN r.odobreno=1 THEN 'Potvrdjeno' ELSE 'U fazi cekanja' END) AS status,  (CASE WHEN r.agentID!='NULL' THEN CONCAT(CONCAT(k.ime,' '),k.prezime)  ELSE '' END)      AS agent        
+                            FROM rezervacija r JOIN let l ON(r.letID=l.letID) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID) LEFT JOIN korisnik k ON(r.agentID=k.korisnikID)
                             WHERE r.rezervacijaid IN(SELECT rezervacijaid FROM rezervacija WHERE korisnikID=@korisnikID)";
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
@@ -49,9 +50,9 @@ namespace Hello.NET.Controllers {
         [Route("get/all/by/agentID")]
         public JsonResult GetAllByAgentID(Agent Agent) {
 
-            string query = @"SELECT  r.rezervacijaID,l.letID,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,l.otkazan
-                            FROM let l JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID) JOIN rezervacija r ON(r.letID=l.letID)
-                            WHERE l.letID IN(SELECT letID FROM rezervacija WHERE agentID=@AgentID)";
+            string query = @"SELECT  r.rezervacijaID,l.letID,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,r.agentID
+                            FROM rezervacija r JOIN let l ON(r.letID=l.letID) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
+                            WHERE r.rezervacijaid IN(SELECT rezervacijaid FROM rezervacija WHERE agentID=@AgentID)";
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
             MySqlDataReader myReader;
