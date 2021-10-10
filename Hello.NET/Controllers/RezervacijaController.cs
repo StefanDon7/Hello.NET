@@ -27,8 +27,8 @@ namespace Hello.NET.Controllers {
         public JsonResult GetAllByUser(Korisnik korisnik) {
 
             string query = @"SELECT  r.rezervacijaID,l.letID,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,l.otkazan
-                            FROM let l JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID) JOIN rezervacija r ON(r.letID=l.letID)
-                            WHERE l.letID IN(SELECT letID FROM rezervacija WHERE korisnikID=@korisnikID)";
+                            FROM rezervacija r JOIN let l ON(r.letID=l.letID) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
+                            WHERE r.rezervacijaid IN(SELECT rezervacijaid FROM rezervacija WHERE korisnikID=@korisnikID)";
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
             MySqlDataReader myReader;
