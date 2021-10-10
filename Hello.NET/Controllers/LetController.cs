@@ -25,8 +25,10 @@ namespace Hello.NET.Controllers
         [Route("get/all")]
         public JsonResult GetAll()
         {
-            string query = @"SELECT l.letid, m1.naziv as mestoPolaska,m2.naziv as MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,l.otkazan
-                            FROM let l JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)";
+            string query = @"SELECT  l.letid,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,SUM(CASE WHEN r.rezervacijaID!='NULL' THEN 1 ELSE 0 END)  as brojRezervacija, (CASE WHEN l.otkazan=1 THEN 'Otazan' ELSE '' END)  as status
+                            FROM rezervacija r RIGHT JOIN let l ON(r.letid=l.letid) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
+                            WHERE l.otkazan=0
+                            GROUP BY letid";
 
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
@@ -44,6 +46,29 @@ namespace Hello.NET.Controllers
             }
             return new JsonResult(dataTable);
         }
+        [HttpGet]
+        [Route("get/all/1")]
+        public JsonResult GetAll1() {
+            string query = @"SELECT  l.letid,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,SUM(CASE WHEN r.rezervacijaID!='NULL' THEN 1 ELSE 0 END)  as brojRezervacija,(CASE WHEN l.otkazan=1 THEN 'Otazan' ELSE '' END)  as status
+                            FROM rezervacija r RIGHT JOIN let l ON(r.letid=l.letid) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
+                           
+                            GROUP BY letid";
+
+            DataTable dataTable = new DataTable();
+            string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
+            MySqlDataReader myReader;
+            using (MySqlConnection myCon = new MySqlConnection(sqlDataSource)) {
+                myCon.Open();
+                using (MySqlCommand myCommand = new MySqlCommand(query, myCon)) {
+                    myReader = myCommand.ExecuteReader();
+                    dataTable.Load(myReader);
+                    myReader.Close();
+                    myCon.Close();
+                }
+            }
+            return new JsonResult(dataTable);
+        }
+
         [HttpGet]
         [Route("get/all/by/{mesto1?}/{mesto2?}/{datum?}")]
         public JsonResult GetAllByPlace1Place2Date(string? mesto1,string? mesto2,string? datum) {
@@ -106,7 +131,7 @@ namespace Hello.NET.Controllers
                     myCon.Close();
                 }
             }
-            return new JsonResult("Updated Successfully");
+            return new JsonResult("Успешно отказан лет!");
         }
         [HttpDelete("{id}")]
         public JsonResult Delete(int id)

@@ -38,12 +38,33 @@ namespace Hello.NET.Controllers {
             }
             return new JsonResult(dataTable);
         }
+      
+        [HttpPost]
+        [Route("getbyEmail")]
+        public JsonResult PostGetbyEmail(Korisnik Korisnik) {
+            string query = @"select * from korisnik where email=@email";
+            DataTable dataTable = new DataTable();
+            string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
+            MySqlDataReader myReader;
+            using (MySqlConnection myCon = new MySqlConnection(sqlDataSource)) {
+                myCon.Open();
+                using (MySqlCommand myCommand = new MySqlCommand(query, myCon)) {
+                    myCommand.Parameters.AddWithValue("@email", Korisnik.Email);
+                    myCommand.Parameters.AddWithValue("@sifra", Korisnik.Sifra);
+                    myReader = myCommand.ExecuteReader();
+                    dataTable.Load(myReader);
+                    myReader.Close();
+                    myCon.Close();
+                }
+            }
+            return new JsonResult(dataTable);
+        }
 
 
         [HttpPost]
         [Route("add")]
         public JsonResult PostAdd(Korisnik Korisnik) {
-            string query = @"insert into korisnik (ime,prezime,email,sifra) values(@ime,@prezime,@email,@sifra)";
+            string query = @"insert into korisnik (ime,prezime,email,sifra,roleID) values(@ime,@prezime,@email,@sifra,1)";
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
             MySqlDataReader myReader;
@@ -60,7 +81,7 @@ namespace Hello.NET.Controllers {
                     myCon.Close();
                 }
             }
-            return new JsonResult("Added Successfully");
+            return new JsonResult("Корисник: " + Korisnik.Ime + " " + Korisnik.Prezime);
         }
 
     }
