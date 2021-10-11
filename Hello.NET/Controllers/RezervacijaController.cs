@@ -22,6 +22,29 @@ namespace Hello.NET.Controllers {
             _configuration = configuration;
         }
 
+        [HttpGet]
+        [Route("get/all")]
+        public JsonResult getAll() {
+
+            string query = @"SELECT  r.rezervacijaID,l.letID,m1.naziv AS mestoPolaska,m2.naziv AS mestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,
+                            (CASE WHEN r.odobreno=1 THEN 'Potvrdjeno' ELSE 'U fazi cekanja' END) AS status,  (CASE WHEN r.agentID!='NULL' THEN CONCAT(CONCAT(k.ime,' '),k.prezime)  ELSE '' END)      AS agent        
+                            FROM rezervacija r JOIN let l ON(r.letID=l.letID) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID) LEFT JOIN korisnik k ON(r.agentID=k.korisnikID)";
+            DataTable dataTable = new DataTable();
+            string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
+            MySqlDataReader myReader;
+            using (MySqlConnection myCon = new MySqlConnection(sqlDataSource)) {
+                myCon.Open();
+                using (MySqlCommand myCommand = new MySqlCommand(query, myCon)) {
+                    myReader = myCommand.ExecuteReader();
+                    dataTable.Load(myReader);
+                    myReader.Close();
+                    myCon.Close();
+                }
+            }
+
+            return new JsonResult(dataTable);
+        }
+
         [HttpPost]
         [Route("get/all/by/userID")]
         public JsonResult GetAllByUser(Korisnik korisnik) {
@@ -46,20 +69,19 @@ namespace Hello.NET.Controllers {
 
             return new JsonResult(dataTable);
         }
-        [HttpPost]
-        [Route("get/all/by/agentID")]
-        public JsonResult GetAllByAgentID(Agent Agent) {
+        [HttpGet]
+        [Route("get/all/by/agent")]
+        public JsonResult GetAllByAgentID() {
 
-            string query = @"SELECT  r.rezervacijaID,l.letID,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,r.agentID
-                            FROM rezervacija r JOIN let l ON(r.letID=l.letID) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
-                            WHERE r.rezervacijaid IN(SELECT rezervacijaid FROM rezervacija WHERE agentID=@AgentID)";
+            string query = @"SELECT r.agentID,k.ime,k.prezime,SUM(CASE WHEN r.agentID!='NULL' THEN 1 ELSE 0 END)  AS brojRezervacija
+                            FROM rezervacija r JOIN korisnik k ON (r.agentID=k.korisnikID)
+                            GROUP BY  r.agentID";
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
             MySqlDataReader myReader;
             using (MySqlConnection myCon = new MySqlConnection(sqlDataSource)) {
                 myCon.Open();
                 using (MySqlCommand myCommand = new MySqlCommand(query, myCon)) {
-                    myCommand.Parameters.AddWithValue("@AgentID", Agent.AgentID);
                     myReader = myCommand.ExecuteReader();
                     dataTable.Load(myReader);
                     myReader.Close();
