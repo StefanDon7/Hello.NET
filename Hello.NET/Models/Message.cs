@@ -5,5 +5,6 @@ using System.Threading.Tasks;
 
 namespace Hello.NET.Models {
     public class Message {
+        public string Poruka { get; set; }
     }
 }

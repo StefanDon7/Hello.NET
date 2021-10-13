@@ -65,7 +65,7 @@ namespace Hello.NET
             app.UseCors("CorsPolicy");
             app.UseSignalR(routes =>
             {
-                routes.MapHub<RezervacijeHub>("/rezervacije");
+                routes.MapHub<RezervacijeHub>("/poruka");
             });
           
 
@@ -88,7 +88,7 @@ namespace Hello.NET
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapHub<RezervacijeHub>("/rezervacije");
+                endpoints.MapHub<RezervacijeHub>("/poruka");
             });
         }
     }

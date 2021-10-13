@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Hello.NET.SignalR {
     public interface IHubClient {
-        Task BroadcastMessage(Rezervacija rezervacija);
+        Task BroadcastMessage(Message message);
 
         
     }

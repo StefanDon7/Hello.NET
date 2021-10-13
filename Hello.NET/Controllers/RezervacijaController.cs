@@ -45,7 +45,7 @@ namespace Hello.NET.Controllers {
                     myCon.Close();
                 }
             }
-
+            /*
             Rezervacija r = new Rezervacija();
             r.AgentID = 5;
             r.KorisnikID = 6;
@@ -58,6 +58,7 @@ namespace Hello.NET.Controllers {
             } catch(Exception e) {
                 throw e;
             }
+            */
             
             return new JsonResult(dataTable);
         }
