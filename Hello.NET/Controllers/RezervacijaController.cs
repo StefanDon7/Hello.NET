@@ -1,6 +1,8 @@
 ﻿using Hello.NET.Domain.Models;
 using Hello.NET.Models;
+using Hello.NET.SignalR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
 using System;
@@ -17,12 +19,50 @@ namespace Hello.NET.Controllers {
     public class RezervacijaController : ControllerBase {
 
         private readonly IConfiguration _configuration;
+        private IHubContext<RezervacijeHub, IHubClient> _hubContext;
 
-        public RezervacijaController(IConfiguration configuration) {
+        public RezervacijaController(IConfiguration configuration,IHubContext<RezervacijeHub,IHubClient> hubContext) {
             _configuration = configuration;
+           _hubContext = hubContext;
         }
 
         [HttpGet]
+        [Route("get")]
+        public JsonResult get() {
+
+            string query = @"SELECT  r.rezervacijaID,l.letID,m1.naziv AS mestoPolaska,m2.naziv AS mestoDolaska,l.brojpresedanja,l.datumPolaska,l.brojMesta,
+                            (CASE WHEN r.odobreno=1 THEN 'Potvrdjeno' ELSE 'U fazi cekanja' END) AS status,  (CASE WHEN r.agentID!='NULL' THEN CONCAT(CONCAT(k.ime,' '),k.prezime)  ELSE '' END)      AS agent        
+                            FROM rezervacija r JOIN let l ON(r.letID=l.letID) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID) LEFT JOIN korisnik k ON(r.agentID=k.korisnikID)";
+            DataTable dataTable = new DataTable();
+            string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
+            MySqlDataReader myReader;
+            using (MySqlConnection myCon = new MySqlConnection(sqlDataSource)) {
+                myCon.Open();
+                using (MySqlCommand myCommand = new MySqlCommand(query, myCon)) {
+                    myReader = myCommand.ExecuteReader();
+                    dataTable.Load(myReader);
+                    myReader.Close();
+                    myCon.Close();
+                }
+            }
+
+            Rezervacija r = new Rezervacija();
+            r.AgentID = 5;
+            r.KorisnikID = 6;
+            r.LetID = 7;
+       
+
+
+            try {
+                _hubContext.Clients.All.BroadcastMessage(r);
+            } catch(Exception e) {
+                throw e;
+            }
+            
+            return new JsonResult(dataTable);
+        }
+
+            [HttpGet]
         [Route("get/all")]
         public JsonResult getAll() {
 

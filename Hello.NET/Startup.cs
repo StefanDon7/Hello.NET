@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Serialization;
 using Hello.NET.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Hello.NET.SignalR;
 
 namespace Hello.NET
 {
@@ -28,6 +29,19 @@ namespace Hello.NET
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(o => o.AddPolicy("CorsPolicy", builder =>
+            {
+                builder.AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowAnyOrigin()
+                        .AllowCredentials()
+                        .WithOrigins("http://localhost:8100");
+            }));
+            services.AddSignalR();
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
+
+
             //Enable CORS
             services.AddCors(c =>
             {
@@ -47,6 +61,14 @@ namespace Hello.NET
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
+            app.UseCors("CorsPolicy");
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<RezervacijeHub>("/rezervacije");
+            });
+          
+
             //Enable CORS
             app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
          
@@ -55,6 +77,7 @@ namespace Hello.NET
             {
                 app.UseDeveloperExceptionPage();
             }
+          
 
             app.UseHttpsRedirection();
 
@@ -65,6 +88,7 @@ namespace Hello.NET
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<RezervacijeHub>("/rezervacije");
             });
         }
     }

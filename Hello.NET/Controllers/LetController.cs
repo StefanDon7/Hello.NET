@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using System.Data;
 using MySql.Data.MySqlClient;
 using Hello.NET.Domain.Models;
+
 namespace Hello.NET.Controllers
 {
     [Route("api/[controller]")]
@@ -28,7 +29,8 @@ namespace Hello.NET.Controllers
             string query = @"SELECT  l.letid,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,SUM(CASE WHEN r.rezervacijaID!='NULL' THEN 1 ELSE 0 END)  as brojRezervacija, (CASE WHEN l.otkazan=1 THEN 'Отказан' ELSE '' END)  as status
                             FROM rezervacija r RIGHT JOIN let l ON(r.letid=l.letid) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
                             WHERE l.otkazan=0
-                            GROUP BY letid";
+                            GROUP BY letid order by l.datumPolaska DESC";
+
 
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
@@ -52,7 +54,7 @@ namespace Hello.NET.Controllers
             string query = @"SELECT  l.letid,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,SUM(CASE WHEN r.rezervacijaID!='NULL' THEN 1 ELSE 0 END)  as brojRezervacija,(CASE WHEN l.otkazan=1 THEN 'Отказан' ELSE '' END)  as status
                             FROM rezervacija r RIGHT JOIN let l ON(r.letid=l.letid) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
                            
-                            GROUP BY letid";
+                            GROUP BY letid order by l.datumPolaska DESC";
 
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
@@ -74,7 +76,7 @@ namespace Hello.NET.Controllers
         public JsonResult GetAllByPlace1Place2Date(string? mesto1,string? mesto2,string? datum) {
             string query = @"SELECT  l.letid,m1.naziv AS mestoPolaska,m2.naziv AS MestoDolaska,l.brojPresedanja,l.datumPolaska,l.brojMesta,SUM(CASE WHEN r.rezervacijaID!='NULL' THEN 1 ELSE 0 END)  as brojRezervacija
                             FROM rezervacija r RIGHT JOIN let l ON(r.letid=l.letid) JOIN mesto m1 ON(l.mestoPolaska=m1.mestoID) JOIN mesto m2 ON(l.mestoDolaska=m2.mestoID)
-                             WHERE m1.naziv='" + mesto1+"' AND m2.naziv='"+mesto2+"' AND l.datumPolaska LIKE '"+datum+ "%' AND otkazan=0 GROUP BY letid";
+                             WHERE m1.naziv='" + mesto1+"' AND m2.naziv='"+mesto2+"' AND l.datumPolaska LIKE '"+datum+ "%' AND otkazan=0 GROUP BY letid order by l.datumPolaska DESC";
             DataTable dataTable = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
             MySqlDataReader myReader;
@@ -123,6 +125,26 @@ namespace Hello.NET.Controllers
                 myCon.Open();
                 using (MySqlCommand myCommand = new MySqlCommand(query, myCon))
                 {
+                    myCommand.Parameters.AddWithValue("@LetID", let.LetID);
+
+                    myReader = myCommand.ExecuteReader();
+                    dataTable.Load(myReader);
+                    myReader.Close();
+                    myCon.Close();
+                }
+            }
+            return new JsonResult("Успешно отказан лет!");
+        }
+        [HttpPut]
+        [Route("update")]
+        public JsonResult PutUpdate(Let let) {
+            string query = @"update let set otkazan=0 where letID=@LetID";
+            DataTable dataTable = new DataTable();
+            string sqlDataSource = _configuration.GetConnectionString("MySqlConnection");
+            MySqlDataReader myReader;
+            using (MySqlConnection myCon = new MySqlConnection(sqlDataSource)) {
+                myCon.Open();
+                using (MySqlCommand myCommand = new MySqlCommand(query, myCon)) {
                     myCommand.Parameters.AddWithValue("@LetID", let.LetID);
 
                     myReader = myCommand.ExecuteReader();
